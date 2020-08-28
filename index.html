@@ -1,0 +1,62 @@
+<html>
+
+<head>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="lib/squareMatrix.js"></script>
+    <script src="lib/lifeGame.js"></script>
+    
+</head>
+
+<body>
+    <h1>Life Game</h1>
+
+    <div id="myDiv" style="width:600px;height:600px;"></div>
+    <script>
+        let lifeGame = new LifeGame(300);
+
+        lifeGame.growthRate = 0.2;
+        lifeGame.powerOfDiffusion = 0.07;
+
+        // lifeGame._matrix[50][50] = 0.5;
+
+        for(var i = 0; i < 10; i++) {
+            var x = Math.floor(Math.random() * 300);
+            var y = Math.floor(Math.random() * 300);
+
+            lifeGame.matrix[x][y] = 0.5;
+        }
+
+        var data = [{
+            z: lifeGame.matrix,
+            type: 'heatmap'
+        }];
+
+        Plotly.newPlot('myDiv', data);
+
+        function update() {
+            lifeGame.growUp();
+
+            Plotly.animate('myDiv', {
+                data: [{
+                    z: lifeGame.matrix,
+                }]
+            }, {
+                transition: {
+                    duration: 0,
+                },
+                frame: {
+                    duration: 0,
+                    redraw: true,
+                }
+            });
+            requestAnimationFrame(update);
+        }
+
+        requestAnimationFrame(update);
+
+    </script>
+
+    See <a href="https://plotly.com/">Officail Site</a>.
+</body>
+
+</html>
