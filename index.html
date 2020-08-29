@@ -1,44 +1,85 @@
-<html>
+<!DOCTYPE html>
+<html  lang="en" xml:lang="en">
 
 <head>
+    <title>Population Simulator</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="lib/squareMatrix.js"></script>
-    <script src="lib/lifeGame.js"></script>
+    <script src="lib/population.js"></script>
     
 </head>
 
 <body>
     <h1>Life Game</h1>
 
-    <div id="myDiv" style="width:600px;height:600px;"></div>
+    <p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Prey</th>
+                    <th>Predator</th>    
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div id="preyDiv" style="width:600px;height:600px;"></div>
+                    </td>
+                    <td>
+                        <div id="predatorDiv" style="width:600px;height:600px;"></div>
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </p>
     <script>
-        let lifeGame = new LifeGame(300);
+        const FIELDSIZE = 200;
+        const POINT = 30;
 
-        lifeGame.growthRate = 0.2;
-        lifeGame.powerOfDiffusion = 0.07;
+        function deffineInitialDistributions() {
+            for(var i = 0; i < POINT; i++) {
+                var x = Math.floor(Math.random() * FIELDSIZE);
+                var y = Math.floor(Math.random() * FIELDSIZE);
 
-        // lifeGame._matrix[50][50] = 0.5;
-
-        for(var i = 0; i < 10; i++) {
-            var x = Math.floor(Math.random() * 300);
-            var y = Math.floor(Math.random() * 300);
-
-            lifeGame.matrix[x][y] = 0.5;
+                predatorPopulation.setValue(x, y, 0.5);
+            }
+            for(var i = 0; i < POINT; i++) {
+                var x = Math.floor(Math.random() * FIELDSIZE);
+                var y = Math.floor(Math.random() * FIELDSIZE);
+                preyPopulation.setValue(x, y, 0.5);
+            }
         }
 
-        var data = [{
-            z: lifeGame.matrix,
-            type: 'heatmap'
-        }];
+        let predatorPopulation = new Population(FIELDSIZE);
+        predatorPopulation.growthRate = 0.01;
+        predatorPopulation.externalAffect = function(x, y) {
+            return predatorPopulation.getValue(x, y) * ( preyPopulation.getValue(x, y) - 0.5);
+        }
 
-        Plotly.newPlot('myDiv', data);
+        let preyPopulation = new Population(FIELDSIZE);
+        preyPopulation.externalAffect = function(x, y) {
+            return - preyPopulation.getValue(x, y) * predatorPopulation.getValue(x, y);
+        }
+
+        deffineInitialDistributions();
+
+        Plotly.newPlot('preyDiv', [{
+            z: preyPopulation.matrix,
+            type: 'heatmap',
+        }]);
+        Plotly.newPlot('predatorDiv', [{
+            z: predatorPopulation.matrix,
+            type: 'heatmap',
+        }]);
 
         function update() {
-            lifeGame.growUp();
+            const nextPredator = predatorPopulation.growUp();
+            const nextPrey = preyPopulation.growUp();
 
-            Plotly.animate('myDiv', {
+            Plotly.animate('preyDiv', {
                 data: [{
-                    z: lifeGame.matrix,
+                    z: nextPrey.matrix,
                 }]
             }, {
                 transition: {
@@ -49,6 +90,23 @@
                     redraw: true,
                 }
             });
+
+            Plotly.animate('predatorDiv', {
+                data: [{
+                    z: nextPredator.matrix,
+                }]
+            }, {
+                transition: {
+                    duration: 0,
+                },
+                frame: {
+                    duration: 0,
+                    redraw: true,
+                }
+            });
+
+            predatorPopulation = nextPredator;
+            preyPopulation = nextPrey;
             requestAnimationFrame(update);
         }
 
